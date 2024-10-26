@@ -47,7 +47,15 @@ const retrieveFacilityFromDB = async (query: Record<string, unknown>) => {
   const filterQueryItems: any = {
     ...query,
   };
-  const removableFields = ["searchTerm", "sort", "limit", "page", "fields"];
+  const removableFields = [
+    "searchTerm",
+    "sort",
+    "limit",
+    "page",
+    "fields",
+    "minPrice",
+    "maxPrice",
+  ];
   removableFields.forEach((field) => delete filterQueryItems[field]);
 
   // search
@@ -61,8 +69,21 @@ const retrieveFacilityFromDB = async (query: Record<string, unknown>) => {
     })),
   });
 
+  let minPrice = 0;
+  let maxPrice = 10000;
+
+  if (query?.minPrice) {
+    minPrice = query.minPrice as number;
+  }
+  if (query?.maxPrice) {
+    maxPrice = query.maxPrice as number;
+  }
+
+  const rangFilter = searchQuery.find({
+    pricePerHour: { $gte: minPrice, $lte: maxPrice },
+  });
   // Filter query
-  const filterQuery = searchQuery.find(filterQueryItems);
+  const filterQuery = rangFilter.find(filterQueryItems);
 
   // sort
   let sort = "-pricePerHour";
@@ -72,7 +93,7 @@ const retrieveFacilityFromDB = async (query: Record<string, unknown>) => {
   const sortQuery = filterQuery.sort(sort);
 
   let page = 1;
-  let limit = 8;
+  let limit = 6;
   let skip = 0;
   if (query?.limit) {
     limit = Number(query.limit) as number;

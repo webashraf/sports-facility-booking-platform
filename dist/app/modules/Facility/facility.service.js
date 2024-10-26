@@ -40,7 +40,15 @@ const retrieveSingleFacilityFromDB = (id) => __awaiter(void 0, void 0, void 0, f
 const retrieveFacilityFromDB = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const allFacility = yield facility_model_1.Facility.find();
     const filterQueryItems = Object.assign({}, query);
-    const removableFields = ["searchTerm", "sort", "limit", "page", "fields"];
+    const removableFields = [
+        "searchTerm",
+        "sort",
+        "limit",
+        "page",
+        "fields",
+        "minPrice",
+        "maxPrice",
+    ];
     removableFields.forEach((field) => delete filterQueryItems[field]);
     // search
     let searchTerm = "";
@@ -52,8 +60,19 @@ const retrieveFacilityFromDB = (query) => __awaiter(void 0, void 0, void 0, func
             [field]: { $regex: searchTerm, $options: "i" },
         })),
     });
+    let minPrice = 0;
+    let maxPrice = 10000;
+    if (query === null || query === void 0 ? void 0 : query.minPrice) {
+        minPrice = query.minPrice;
+    }
+    if (query === null || query === void 0 ? void 0 : query.maxPrice) {
+        maxPrice = query.maxPrice;
+    }
+    const rangFilter = searchQuery.find({
+        pricePerHour: { $gte: minPrice, $lte: maxPrice },
+    });
     // Filter query
-    const filterQuery = searchQuery.find(filterQueryItems);
+    const filterQuery = rangFilter.find(filterQueryItems);
     // sort
     let sort = "-pricePerHour";
     if (query === null || query === void 0 ? void 0 : query.sort) {
@@ -61,7 +80,7 @@ const retrieveFacilityFromDB = (query) => __awaiter(void 0, void 0, void 0, func
     }
     const sortQuery = filterQuery.sort(sort);
     let page = 1;
-    let limit = 8;
+    let limit = 6;
     let skip = 0;
     if (query === null || query === void 0 ? void 0 : query.limit) {
         limit = Number(query.limit);
