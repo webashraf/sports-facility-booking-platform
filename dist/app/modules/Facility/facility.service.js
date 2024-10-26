@@ -8,12 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FacilityService = void 0;
-const notFoundError_1 = __importDefault(require("../../error/notFoundError"));
 const facility_model_1 = require("./facility.model");
 const createFacilityIntoDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield facility_model_1.Facility.create(payload);
@@ -30,16 +26,58 @@ const deleteFacilityIntoDB = (id) => __awaiter(void 0, void 0, void 0, function*
     const result = yield facility_model_1.Facility.findByIdAndUpdate(id, { isDeleted: true }, { new: true, runValidators: true });
     return result;
 });
-const retrieveFacilityFromDB = () => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield facility_model_1.Facility.find({ isDeleted: false });
-    if (result.length < 1) {
-        throw new notFoundError_1.default(404, "No Data Found");
-    }
-    return result;
-});
+// const retrieveFacilityFromDBs = async () => {
+//   const result = await Facility.find({ isDeleted: false });
+//   if (result.length < 1) {
+//     throw new NotFoundError(404, "No Data Found");
+//   }
+//   return result;
+// };
 const retrieveSingleFacilityFromDB = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield facility_model_1.Facility.findById(id);
     return result;
+});
+const retrieveFacilityFromDB = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    const allFacility = yield facility_model_1.Facility.find();
+    const filterQueryItems = Object.assign({}, query);
+    const removableFields = ["searchTerm", "sort", "limit", "page", "fields"];
+    removableFields.forEach((field) => delete filterQueryItems[field]);
+    // search
+    let searchTerm = "";
+    if (query === null || query === void 0 ? void 0 : query.searchTerm) {
+        searchTerm = query.searchTerm;
+    }
+    const searchQuery = facility_model_1.Facility.find({
+        $or: ["name", "location"].map((field) => ({
+            [field]: { $regex: searchTerm, $options: "i" },
+        })),
+    });
+    // Filter query
+    const filterQuery = searchQuery.find(filterQueryItems);
+    // sort
+    let sort = "-pricePerHour";
+    if (query === null || query === void 0 ? void 0 : query.sort) {
+        sort = query.sort;
+    }
+    const sortQuery = filterQuery.sort(sort);
+    let page = 1;
+    let limit = 8;
+    let skip = 0;
+    if (query === null || query === void 0 ? void 0 : query.limit) {
+        limit = Number(query.limit);
+    }
+    if (query === null || query === void 0 ? void 0 : query.page) {
+        page = Number(query === null || query === void 0 ? void 0 : query.page);
+        skip = (page - 1) * limit;
+    }
+    const paginateQuery = sortQuery.skip(skip);
+    const limitQuery = paginateQuery.limit(limit);
+    let fields = "-__v";
+    if (query === null || query === void 0 ? void 0 : query.fields) {
+        fields = query.fields.split(",").join(" ");
+    }
+    const filedLimitQuery = yield limitQuery.select(fields);
+    return { facilities: filedLimitQuery, dataLength: allFacility === null || allFacility === void 0 ? void 0 : allFacility.length };
 });
 exports.FacilityService = {
     createFacilityIntoDB,

@@ -14,12 +14,12 @@ router.post(
   BookingController.createABooking
 );
 
-router.get("/", auth(USER_ROLE.admin), BookingController.retriveBookings);
+router.get("/", auth(USER_ROLE.admin), BookingController.retrieveBookings);
 
 router.get(
   "/user/:id",
   auth(USER_ROLE.user),
-  BookingController.retriveBookingsForUser
+  BookingController.retrieveBookingsForUser
 );
 
 router.delete(

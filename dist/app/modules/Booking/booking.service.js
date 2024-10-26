@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BookingService = void 0;
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const payment_utils_1 = require("../Payment/payment.utils");
 const user_model_1 = require("../User/user.model");
 const booking_model_1 = require("./booking.model");
@@ -76,9 +77,8 @@ const createABookingIntoDB = (payload, email) => __awaiter(void 0, void 0, void 
     }
 });
 // --------------------------------------------------------------------------------------------------------------------
-const retriveABookingsIntoDB = (email, isUser) => __awaiter(void 0, void 0, void 0, function* () {
+const retrieveABookingsIntoDB = (email, isUser) => __awaiter(void 0, void 0, void 0, function* () {
     if (isUser) {
-        // console.log(id);
         const user = yield user_model_1.User.findOne({ email: email });
         const result = yield booking_model_1.Booking.find({
             user: user === null || user === void 0 ? void 0 : user._id,
@@ -100,12 +100,105 @@ const retriveABookingsIntoDB = (email, isUser) => __awaiter(void 0, void 0, void
     // const result = await Booking.find().populate("facility");
     return result;
 });
+const retrieveBookingsFromDB = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    const allBookings = yield booking_model_1.Booking.find();
+    const filterQueryItems = Object.assign({}, query);
+    const removableFields = ["searchTerm", "sort", "limit", "page", "fields"];
+    removableFields.filter((item) => delete filterQueryItems[item]);
+    // search results
+    let searchTerm = "";
+    if (query === null || query === void 0 ? void 0 : query.searchTerm) {
+        searchTerm = query.searchTerm;
+    }
+    const searchQuery = booking_model_1.Booking.find({
+        $or: ["date", "facility.name"].map((field) => ({
+            [field]: { $regex: searchTerm, $options: "i" },
+        })),
+    });
+    // Filter Queries
+    const filterQuery = searchQuery
+        .find(filterQueryItems)
+        .populate("user")
+        .populate("facility");
+    // Sort Queries
+    let sort = "date";
+    if (query.sort) {
+        sort = query.sort;
+    }
+    const sortQuery = filterQuery.sort(sort);
+    let page = 1;
+    let limit = 0;
+    let skip = 0;
+    if (query === null || query === void 0 ? void 0 : query.limit) {
+        limit = Number(query.limit);
+    }
+    if (query === null || query === void 0 ? void 0 : query.page) {
+        page = Number(query.page);
+        skip = (page - 1) * limit;
+    }
+    const paginateQuery = sortQuery.skip(skip);
+    const limitQuery = paginateQuery.limit(limit);
+    let fields = "-__v";
+    if (query === null || query === void 0 ? void 0 : query.fields) {
+        fields = (query === null || query === void 0 ? void 0 : query.fields).split(",").join(" ");
+    }
+    const filedLimitQuery = yield limitQuery.select(fields);
+    return { bookings: filedLimitQuery, dataLength: allBookings.length };
+});
+// const retrieveBookingsFromDB = async (query: Record<string, unknown>) => {
+//   const allFacility = await Booking.find();
+//   const filterQueryItems: any = {
+//     ...query,
+//   };
+//   const removableFields = ["searchTerm", "sort", "limit", "page", "fields"];
+//   removableFields.forEach((field) => delete filterQueryItems[field]);
+//   // search
+//   let searchTerm = "";
+//   if (query?.searchTerm) {
+//     searchTerm = query.searchTerm as string;
+//   }
+//   const searchQuery = Booking.find({
+//     $or: ["name", "location"].map((field) => ({
+//       [field]: { $regex: searchTerm, $options: "i" },
+//     })),
+//   });
+//   // Filter query
+//   const filterQuery = searchQuery
+//     .find(filterQueryItems)
+//     .populate("user")
+//     .populate("facility");
+//   // sort
+//   let sort = "-pricePerHour";
+//   if (query?.sort) {
+//     sort = query.sort as string;
+//   }
+//   const sortQuery = filterQuery.sort(sort);
+//   let page = 1;
+//   let limit = 0;
+//   let skip = 0;
+//   if (query?.limit) {
+//     limit = Number(query.limit) as number;
+//   }
+//   if (query?.page) {
+//     page = Number(query?.page) as number;
+//     skip = (page - 1) * limit;
+//   }
+//   const paginateQuery = sortQuery.skip(skip);
+//   const limitQuery = paginateQuery.limit(limit);
+//   let fields = "-__v";
+//   if (query?.fields) {
+//     fields = (query.fields as string).split(",").join(" ");
+//   }
+//   const filedLimitQuery = await limitQuery.select(fields);
+//   return { facilities: filedLimitQuery, dataLength: allFacility?.length };
+// };
 const deleteABookingFromDB = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield booking_model_1.Booking.findByIdAndUpdate(id, { isBooked: "canceled" }, { runValidators: true, new: true }).populate("facility");
     return result;
 });
 exports.BookingService = {
     createABookingIntoDB,
-    retriveABookingsIntoDB,
+    retrieveABookingsIntoDB,
     deleteABookingFromDB,
+    retrieveBookingsFromDB,
 };

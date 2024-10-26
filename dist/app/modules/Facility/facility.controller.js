@@ -43,12 +43,13 @@ const deleteFacility = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
     });
 }));
 const retrieveFacility = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield facility_service_1.FacilityService.retrieveFacilityFromDB();
+    const result = yield facility_service_1.FacilityService.retrieveFacilityFromDB(req.query);
     res.status(200).json({
         success: true,
         statusCode: 200,
         message: "Facilities retrieved successfully",
-        data: result,
+        dataLength: result === null || result === void 0 ? void 0 : result.dataLength,
+        data: result === null || result === void 0 ? void 0 : result.facilities,
     });
 }));
 const retrieveSingleFacility = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

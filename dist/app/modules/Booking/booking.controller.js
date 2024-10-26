@@ -30,17 +30,30 @@ const createABooking = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         data: result,
     });
 }));
-const retriveBookings = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield booking_service_1.BookingService.retriveABookingsIntoDB(req.params.id, false);
+// const retrieveBookings = catchAsync(async (req, res) => {
+//   const result = await BookingService.retrieveABookingsIntoDB(
+//     req.params.id,
+//     false
+//   );
+//   res.status(200).json({
+//     success: true,
+//     statusCode: 200,
+//     message: "Bookings retrieved successfully",
+//     data: result,
+//   });
+// });
+const retrieveBookings = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield booking_service_1.BookingService.retrieveBookingsFromDB(req.query);
     res.status(200).json({
         success: true,
         statusCode: 200,
-        message: "Bookings retrieved successfully",
-        data: result,
+        message: "Bookings retrieved successfully!!",
+        dataLength: result.dataLength,
+        data: result.bookings,
     });
 }));
-const retriveBookingsForUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield booking_service_1.BookingService.retriveABookingsIntoDB(req.params.id, true);
+const retrieveBookingsForUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield booking_service_1.BookingService.retrieveABookingsIntoDB(req.params.id, true);
     res.status(200).json({
         success: true,
         statusCode: 200,
@@ -59,7 +72,7 @@ const deleteBookingForUser = (0, catchAsync_1.default)((req, res) => __awaiter(v
 }));
 exports.BookingController = {
     createABooking,
-    retriveBookings,
-    retriveBookingsForUser,
+    retrieveBookings,
+    retrieveBookingsForUser,
     deleteBookingForUser,
 };

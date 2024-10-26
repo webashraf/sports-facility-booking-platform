@@ -37,13 +37,14 @@ const deleteFacility = catchAsync(async (req, res) => {
 });
 
 const retrieveFacility = catchAsync(async (req, res) => {
-  const result = await FacilityService.retrieveFacilityFromDB();
+  const result = await FacilityService.retrieveFacilityFromDB(req.query);
 
   res.status(200).json({
     success: true,
     statusCode: 200,
     message: "Facilities retrieved successfully",
-    data: result,
+    dataLength: result?.dataLength,
+    data: result?.facilities,
   });
 });
 

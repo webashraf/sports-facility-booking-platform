@@ -44,9 +44,9 @@ const corsOptions = {
         "http://localhost:5173",
         "https://game-grounds-frontend.vercel.app",
         "https://game-grouhnds-sports-facility-booking-backend.vercel.app",
-    ], // Whitelist the domains you want to allow
+    ],
 };
-app.use((0, cors_1.default)(corsOptions)); // Use the cors middleware with your options
+app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 // Define routes
 app.use("/api/auth/", user_routes_1.userRoute);

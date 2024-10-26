@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { initiatePayment } from "../Payment/payment.utils";
 import { User } from "../User/user.model";
 import { TBooking } from "./booking.interface";
@@ -90,10 +91,8 @@ const createABookingIntoDB = async (payload: TBooking, email: string) => {
 
 // --------------------------------------------------------------------------------------------------------------------
 
-const retriveABookingsIntoDB = async (email: string, isUser: boolean) => {
+const retrieveABookingsIntoDB = async (email: string, isUser: boolean) => {
   if (isUser) {
-    // console.log(id);
-
     const user = await User.findOne({ email: email });
 
     const result = await Booking.find({
@@ -117,6 +116,126 @@ const retriveABookingsIntoDB = async (email: string, isUser: boolean) => {
   return result;
 };
 
+const retrieveBookingsFromDB = async (query: Record<string, any>) => {
+  const allBookings = await Booking.find();
+  const filterQueryItems = {
+    ...query,
+  };
+
+  const removableFields = ["searchTerm", "sort", "limit", "page", "fields"];
+
+  removableFields.filter((item) => delete filterQueryItems[item]);
+
+  // search results
+  let searchTerm = "";
+  if (query?.searchTerm) {
+    searchTerm = query.searchTerm as string;
+  }
+
+  const searchQuery = Booking.find({
+    $or: ["date", "facility.name"].map((field) => ({
+      [field]: { $regex: searchTerm, $options: "i" },
+    })),
+  });
+
+  // Filter Queries
+  const filterQuery = searchQuery
+    .find(filterQueryItems)
+    .populate("user")
+    .populate("facility");
+
+  // Sort Queries
+  let sort = "date";
+  if (query.sort) {
+    sort = query.sort as string;
+  }
+
+  const sortQuery = filterQuery.sort(sort);
+
+  let page = 1;
+  let limit = 0;
+  let skip = 0;
+
+  if (query?.limit) {
+    limit = Number(query.limit) as number;
+  }
+
+  if (query?.page) {
+    page = Number(query.page) as number;
+    skip = (page - 1) * limit;
+  }
+
+  const paginateQuery = sortQuery.skip(skip);
+
+  const limitQuery = paginateQuery.limit(limit);
+
+  let fields = "-__v";
+
+  if (query?.fields) {
+    fields = (query?.fields as string).split(",").join(" ");
+  }
+
+  const filedLimitQuery = await limitQuery.select(fields);
+
+  return { bookings: filedLimitQuery, dataLength: allBookings.length };
+};
+
+// const retrieveBookingsFromDB = async (query: Record<string, unknown>) => {
+//   const allFacility = await Booking.find();
+//   const filterQueryItems: any = {
+//     ...query,
+//   };
+//   const removableFields = ["searchTerm", "sort", "limit", "page", "fields"];
+//   removableFields.forEach((field) => delete filterQueryItems[field]);
+
+//   // search
+//   let searchTerm = "";
+//   if (query?.searchTerm) {
+//     searchTerm = query.searchTerm as string;
+//   }
+//   const searchQuery = Booking.find({
+//     $or: ["name", "location"].map((field) => ({
+//       [field]: { $regex: searchTerm, $options: "i" },
+//     })),
+//   });
+
+//   // Filter query
+//   const filterQuery = searchQuery
+//     .find(filterQueryItems)
+//     .populate("user")
+//     .populate("facility");
+
+//   // sort
+//   let sort = "-pricePerHour";
+//   if (query?.sort) {
+//     sort = query.sort as string;
+//   }
+//   const sortQuery = filterQuery.sort(sort);
+
+//   let page = 1;
+//   let limit = 0;
+//   let skip = 0;
+//   if (query?.limit) {
+//     limit = Number(query.limit) as number;
+//   }
+//   if (query?.page) {
+//     page = Number(query?.page) as number;
+//     skip = (page - 1) * limit;
+//   }
+
+//   const paginateQuery = sortQuery.skip(skip);
+
+//   const limitQuery = paginateQuery.limit(limit);
+
+//   let fields = "-__v";
+
+//   if (query?.fields) {
+//     fields = (query.fields as string).split(",").join(" ");
+//   }
+//   const filedLimitQuery = await limitQuery.select(fields);
+//   return { facilities: filedLimitQuery, dataLength: allFacility?.length };
+// };
+
 const deleteABookingFromDB = async (id: string) => {
   const result = await Booking.findByIdAndUpdate(
     id,
@@ -128,6 +247,7 @@ const deleteABookingFromDB = async (id: string) => {
 
 export const BookingService = {
   createABookingIntoDB,
-  retriveABookingsIntoDB,
+  retrieveABookingsIntoDB,
   deleteABookingFromDB,
+  retrieveBookingsFromDB,
 };

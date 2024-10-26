@@ -21,21 +21,32 @@ const createABooking = catchAsync(async (req, res) => {
   });
 });
 
-const retriveBookings = catchAsync(async (req, res) => {
-  const result = await BookingService.retriveABookingsIntoDB(
-    req.params.id,
-    false
-  );
+// const retrieveBookings = catchAsync(async (req, res) => {
+//   const result = await BookingService.retrieveABookingsIntoDB(
+//     req.params.id,
+//     false
+//   );
+//   res.status(200).json({
+//     success: true,
+//     statusCode: 200,
+//     message: "Bookings retrieved successfully",
+//     data: result,
+//   });
+// });
+
+const retrieveBookings = catchAsync(async (req, res) => {
+  const result = await BookingService.retrieveBookingsFromDB(req.query);
   res.status(200).json({
     success: true,
     statusCode: 200,
-    message: "Bookings retrieved successfully",
-    data: result,
+    message: "Bookings retrieved successfully!!",
+    dataLength: result.dataLength,
+    data: result.bookings,
   });
 });
 
-const retriveBookingsForUser = catchAsync(async (req, res) => {
-  const result = await BookingService.retriveABookingsIntoDB(
+const retrieveBookingsForUser = catchAsync(async (req, res) => {
+  const result = await BookingService.retrieveABookingsIntoDB(
     req.params.id,
     true
   );
@@ -59,7 +70,7 @@ const deleteBookingForUser = catchAsync(async (req, res) => {
 
 export const BookingController = {
   createABooking,
-  retriveBookings,
-  retriveBookingsForUser,
+  retrieveBookings,
+  retrieveBookingsForUser,
   deleteBookingForUser,
 };
