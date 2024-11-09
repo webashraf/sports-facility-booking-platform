@@ -18,7 +18,6 @@ const corsOptions = {
     // "http://localhost:3000",
     // "http://localhost:5173",
     "https://game-grounds-frontend.vercel.app",
-    // "https://game-grounds-frontend-v135.vercel.app",
   ],
 };
 
